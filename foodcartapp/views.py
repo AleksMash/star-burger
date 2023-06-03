@@ -73,6 +73,29 @@ def register_order(request):
     if not isinstance(products, list):
         return Response({'error': 'Products are not represented as a list'},
                         status=status.HTTP_400_BAD_REQUEST)
+    first_name = order_serialized.get('firstname')
+    if not first_name:
+        return Response({'error': 'Firstname is not presented or is null'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(first_name, str):
+        return Response({'error': 'Firstname is not presented as str'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    last_name = order_serialized.get('lastname')
+    if not last_name:
+        return Response({'error': 'Lastname is not presented or is null'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(last_name, str):
+        return Response({'error': 'Lastname is not presented as str'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    phone_number = order_serialized.get('phonenumber')
+    if not phone_number:
+        return Response({'error': 'Phone number is not presented or is null'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    phone_number_typed: PhoneNumber = PhoneNumber.from_string(phone_number, region='RU')
+    if not phone_number_typed.is_valid():
+        return Response({'error': 'Phone number is not valid'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
     product_ids: list = []
     product_quantities: list = []
     for product in products:
@@ -90,9 +113,9 @@ def register_order(request):
 
     try:
         order = Order(
-            first_name=order_serialized['firstname'],
-            last_name=order_serialized['lastname'],
-            phone_number=PhoneNumber.from_string(order_serialized['phonenumber'], region='RU'),
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number_typed,
             address=order_serialized['address']
         )
         order.save()
