@@ -3,6 +3,7 @@ import traceback
 
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework import status
 from rest_framework.decorators import APIView ,api_view
 from rest_framework.response import Response
 
@@ -31,6 +32,7 @@ def banners_list_api(request):
         }
     ])
 
+
 @api_view(['GET'])
 def product_list_api(request):
     products = Product.objects.select_related('category').available()
@@ -54,19 +56,39 @@ def product_list_api(request):
             }
         }
         dumped_products.append(dumped_product)
-    # print(dumped_product)
     return Response(dumped_products)
-    # return JsonResponse(dumped_products, safe=False, json_dumps_params={
-    #     'ensure_ascii': False,
-    #     'indent': 4,
-    # })
+
 
 @api_view(['POST'])
 def register_order(request):
-    print('Im here')
+    order_serialized: dict = request.data
+    products = order_serialized.get('products')
+
+    if products == None:
+        return Response({'error': 'Products list is not presented or is null'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if not products:
+        return Response({'error': 'Products list is empty'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(products, list):
+        return Response({'error': 'Products are not represented as a list'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    product_ids: list = []
+    product_quantities: list = []
+    for product in products:
+        try:
+            product_ids.append(product['product'])
+            product_quantities.append(product['quantity'])
+        except KeyError:
+            return Response({'error': 'Invalid key in the "product-quantity" dictionary'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    db_products = Product.objects.filter(pk__in=product_ids)
+    if not len(db_products) == len(product_ids):
+        return Response({'error': 'one ore more of the given product ids are not found in the database'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
     try:
-        # order_serialized = json.loads(request.body.decode())
-        order_serialized = request.data
         order = Order(
             first_name=order_serialized['firstname'],
             last_name=order_serialized['lastname'],
@@ -74,14 +96,14 @@ def register_order(request):
             address=order_serialized['address']
         )
         order.save()
-        print(order_serialized['products'])
-        for order_product in order_serialized['products']:
+        for i in range(len(product_ids)):
             ProductsInOrder.objects.create(
-                product_id=order_product['product'],
-                order=order,
-                quantity=order_product['quantity'],
+                product_id=product_ids[i],
+                quantity=product_quantities[i],
+                order=order
             )
     except Exception:
-        return Response({'error': traceback.format_exc()})
-        # return JsonResponse({'error': traceback.format_exc()})
-    return Response({})
+        return Response({'error': traceback.format_exc()},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        return Response({}, status=status.HTTP_200_OK)
