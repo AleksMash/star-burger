@@ -3,15 +3,17 @@ import traceback
 
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework.decorators import APIView ,api_view
+from rest_framework.response import Response
 
 from phonenumber_field.phonenumber import PhoneNumber
 
 from .models import Product, Order, ProductsInOrder
 
-
+@api_view(['GET'])
 def banners_list_api(request):
     # FIXME move data to db?
-    return JsonResponse([
+    return Response([
         {
             'title': 'Burger',
             'src': static('burger.jpg'),
@@ -27,12 +29,9 @@ def banners_list_api(request):
             'src': static('tasty.jpg'),
             'text': 'Food is incomplete without a tasty dessert',
         }
-    ], safe=False, json_dumps_params={
-        'ensure_ascii': False,
-        'indent': 4,
-    })
+    ])
 
-
+@api_view(['GET'])
 def product_list_api(request):
     products = Product.objects.select_related('category').available()
 
@@ -55,15 +54,19 @@ def product_list_api(request):
             }
         }
         dumped_products.append(dumped_product)
-    return JsonResponse(dumped_products, safe=False, json_dumps_params={
-        'ensure_ascii': False,
-        'indent': 4,
-    })
+    # print(dumped_product)
+    return Response(dumped_products)
+    # return JsonResponse(dumped_products, safe=False, json_dumps_params={
+    #     'ensure_ascii': False,
+    #     'indent': 4,
+    # })
 
-
+@api_view(['POST'])
 def register_order(request):
+    print('Im here')
     try:
-        order_serialized = json.loads(request.body.decode())
+        # order_serialized = json.loads(request.body.decode())
+        order_serialized = request.data
         order = Order(
             first_name=order_serialized['firstname'],
             last_name=order_serialized['lastname'],
@@ -79,5 +82,6 @@ def register_order(request):
                 quantity=order_product['quantity'],
             )
     except Exception:
-        return JsonResponse({'error': traceback.format_exc()})
-    return JsonResponse({})
+        return Response({'error': traceback.format_exc()})
+        # return JsonResponse({'error': traceback.format_exc()})
+    return Response({})
