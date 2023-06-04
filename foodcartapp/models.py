@@ -131,29 +131,23 @@ class Order(models.Model):
         through='ProductsInOrder',
         null=False
     )
-    first_name = models.CharField(
+    firstname = models.CharField(
         verbose_name='Имя',
         max_length=30,
-        default='',
-        blank=True,
         db_index=True
     )
-    last_name = models.CharField(
+    lastname = models.CharField(
         verbose_name='Имя',
         max_length=30,
-        default='',
-        blank=True,
         db_index=True
     )
-    phone_number = PhoneNumberField(
+    phonenumber = PhoneNumberField(
         region='RU',
         verbose_name='Номер телефона'
     )
     address = models.CharField(
         verbose_name='Адрес доставки',
         max_length=200,
-        default='',
-        blank=True,
         db_index=True
     )
 
@@ -162,7 +156,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name} {self.phone_number}'
+        return f'{self.firstname} {self.lastname} {self.phonenumber}'
 
 
 class ProductsInOrder(models.Model):

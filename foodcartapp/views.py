@@ -6,6 +6,8 @@ from django.templatetags.static import static
 from rest_framework import status
 from rest_framework.decorators import APIView ,api_view
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ValidationError
 
 from phonenumber_field.phonenumber import PhoneNumber
 
@@ -59,72 +61,40 @@ def product_list_api(request):
     return Response(dumped_products)
 
 
+class ProductsInOrderSerializer(ModelSerializer):
+    class Meta:
+        model = ProductsInOrder
+        fields = ['product', 'quantity']
+
+
+class OrderSerializer(ModelSerializer):
+    products = ProductsInOrderSerializer(many=True)
+
+    def validate_products(self, values):
+        if not values:
+            raise ValidationError('Этот список не может быть пустым')
+        return values
+
+    class Meta:
+        model = Order
+        fields = ['products','firstname', 'lastname', 'address', 'phonenumber']
+
+
 @api_view(['POST'])
 def register_order(request):
-    order_serialized: dict = request.data
-    products = order_serialized.get('products')
-
-    if products == None:
-        return Response({'error': 'Products list is not presented or is null'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if not products:
-        return Response({'error': 'Products list is empty'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if not isinstance(products, list):
-        return Response({'error': 'Products are not represented as a list'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    first_name = order_serialized.get('firstname')
-    if not first_name:
-        return Response({'error': 'Firstname is not presented or is null'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if not isinstance(first_name, str):
-        return Response({'error': 'Firstname is not presented as str'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    last_name = order_serialized.get('lastname')
-    if not last_name:
-        return Response({'error': 'Lastname is not presented or is null'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if not isinstance(last_name, str):
-        return Response({'error': 'Lastname is not presented as str'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    phone_number = order_serialized.get('phonenumber')
-    if not phone_number:
-        return Response({'error': 'Phone number is not presented or is null'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    phone_number_typed: PhoneNumber = PhoneNumber.from_string(phone_number, region='RU')
-    if not phone_number_typed.is_valid():
-        return Response({'error': 'Phone number is not valid'},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    product_ids: list = []
-    product_quantities: list = []
-    for product in products:
-        try:
-            product_ids.append(product['product'])
-            product_quantities.append(product['quantity'])
-        except KeyError:
-            return Response({'error': 'Invalid key in the "product-quantity" dictionary'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-    db_products = Product.objects.filter(pk__in=product_ids)
-    if not len(db_products) == len(product_ids):
-        return Response({'error': 'one ore more of the given product ids are not found in the database'},
-                        status=status.HTTP_400_BAD_REQUEST)
-
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
     try:
         order = Order(
-            first_name=first_name,
-            last_name=last_name,
-            phone_number=phone_number_typed,
-            address=order_serialized['address']
+            firstname=serializer.validated_data['firstname'],
+            lastname=serializer.validated_data['lastname'],
+            phonenumber=serializer.validated_data['phonenumber'],
+            address=serializer.validated_data['address']
         )
         order.save()
-        for i in range(len(product_ids)):
-            ProductsInOrder.objects.create(
-                product_id=product_ids[i],
-                quantity=product_quantities[i],
-                order=order
-            )
+        products_in_order_fields = serializer.validated_data['products']
+        products_in_order = [ProductsInOrder(order=order, **fields) for fields in products_in_order_fields]
+        ProductsInOrder.objects.bulk_create(products_in_order)
     except Exception:
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
