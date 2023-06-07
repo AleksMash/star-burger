@@ -93,9 +93,15 @@ def register_order(request):
         )
         order.save()
         products_in_order_fields = serializer.validated_data['products']
-        products_in_order = [ProductsInOrder(order=order, **fields) for fields in products_in_order_fields]
+        products_in_order = [ProductsInOrder(order=order, price=0,  **fields) for fields in products_in_order_fields]
         ProductsInOrder.objects.bulk_create(products_in_order)
+        products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
+        for product_in_order in products_in_order_saved:
+            product_in_order.price = product_in_order.product.price
+        ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
+
     except Exception:
+        print(traceback.format_exc())
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
