@@ -68,7 +68,7 @@ class ProductsInOrderSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = ProductsInOrderSerializer(many=True)
+    products = ProductsInOrderSerializer(many=True, write_only=True)
 
     def validate_products(self, values):
         if not values:
@@ -99,4 +99,5 @@ def register_order(request):
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        return Response({}, status=status.HTTP_200_OK)
+        serializer = OrderSerializer(order)
+        return Response(serializer.data)
