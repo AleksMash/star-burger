@@ -1,15 +1,14 @@
 import json
 import traceback
 
-from django.http import JsonResponse
 from django.templatetags.static import static
+from django.db import transaction, IntegrityError
 from rest_framework import status
-from rest_framework.decorators import APIView ,api_view
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import ValidationError
 
-from phonenumber_field.phonenumber import PhoneNumber
 
 from .models import Product, Order, ProductsInOrder
 
@@ -85,23 +84,23 @@ def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     try:
-        order = Order(
-            firstname=serializer.validated_data['firstname'],
-            lastname=serializer.validated_data['lastname'],
-            phonenumber=serializer.validated_data['phonenumber'],
-            address=serializer.validated_data['address']
-        )
-        order.save()
-        products_in_order_fields = serializer.validated_data['products']
-        products_in_order = [ProductsInOrder(order=order, price=0,  **fields) for fields in products_in_order_fields]
-        ProductsInOrder.objects.bulk_create(products_in_order)
-        products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
-        for product_in_order in products_in_order_saved:
-            product_in_order.price = product_in_order.product.price
-        ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
+        with transaction.atomic():
+            order = Order(
+                firstname=serializer.validated_data['firstname'],
+                lastname=serializer.validated_data['lastname'],
+                phonenumber=serializer.validated_data['phonenumber'],
+                address=serializer.validated_data['address']
+            )
+            order.save()
+            products_in_order_fields = serializer.validated_data['products']
+            products_in_order = [ProductsInOrder(order=order, price=0,  **fields) for fields in products_in_order_fields]
+            ProductsInOrder.objects.bulk_create(products_in_order)
+            products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
+            for product_in_order in products_in_order_saved:
+                product_in_order.price = product_in_order.product.price
+            ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
 
     except Exception:
-        print(traceback.format_exc())
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
