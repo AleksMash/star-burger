@@ -134,6 +134,23 @@ class OrderQueryset(models.QuerySet):
 
 
 class Order(models.Model):
+    NEW = 'NEW'
+    COOKING = 'COOK'
+    DELIVERY = 'DLVR'
+    DONE = 'DONE'
+    ORDER_STATUS = [
+        (NEW, 'Не обработан'),
+        (COOKING, 'Готовится'),
+        (DELIVERY, 'Доставка'),
+        (DONE, 'Доставлен'),
+    ]
+    status = models.CharField(
+        verbose_name='Статус',
+        max_length=4,
+        choices=ORDER_STATUS,
+        default=NEW,
+        db_index=True
+    )
     products= models.ManyToManyField(
         Product,
         through='ProductsInOrder',
