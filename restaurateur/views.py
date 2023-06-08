@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import F, Q, Count
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
@@ -8,7 +9,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -92,8 +93,23 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all().exclude(status='DONE').cost()
+    orders = list(Order.objects.all().exclude(status=Order.DONE)\
+        .prefetch_related('products', 'restaurant').cost().order_by('status'))
+    menu_items = RestaurantMenuItem.objects.filter(availability=True).values('restaurant', 'product')
+    product_restaurans_cache = {}
+    for order in orders:
+        if order.restaurant is None:
+            order_restaurants=[]
+            for product in order.products.all():
+                restaurants_for_product = product_restaurans_cache.get(product.id)
+                if not restaurants_for_product:
+                    restaurants_for_product = menu_items.filter(product=product).values_list('restaurant__name', flat=True)
+                    product_restaurans_cache[product.id] = restaurants_for_product
+                order_restaurants.extend(restaurants_for_product)
+            order.restaurant_for_template = ', '.join(set(order_restaurants))
+        else:
+            order.restaurant_for_template = order.restaurant.name
+
     return render(request, template_name='order_items.html', context={
         'order_items': orders
-        # TODO заглушка для нереализованного функционала
     })

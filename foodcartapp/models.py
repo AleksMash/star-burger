@@ -1,7 +1,7 @@
 import datetime as dt
 
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q
 from django.core.validators import MinValueValidator
 
 from phonenumber_field.modelfields import PhoneNumberField
@@ -136,10 +136,10 @@ class OrderQueryset(models.QuerySet):
 
 
 class Order(models.Model):
-    NEW = 'NEW'
-    COOKING = 'COOK'
-    DELIVERY = 'DLVR'
-    DONE = 'DONE'
+    NEW = '01'
+    COOKING = '02'
+    DELIVERY = '03'
+    DONE = '04'
     ORDER_STATUS = [
         (NEW, 'Не обработан'),
         (COOKING, 'Готовится'),
@@ -212,6 +212,13 @@ class Order(models.Model):
         verbose_name='Комментарий к заказу',
         blank=True,
         default=''
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='Ресторан',
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE
     )
 
     objects = OrderQueryset.as_manager()
