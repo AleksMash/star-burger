@@ -1,3 +1,5 @@
+import datetime as dt
+
 from django.db import models
 from django.db.models import F
 from django.core.validators import MinValueValidator
@@ -150,6 +152,20 @@ class Order(models.Model):
         choices=ORDER_STATUS,
         default=NEW,
         db_index=True
+    )
+    datetime_registered = models.DateTimeField(
+        verbose_name='Зарегестрирован',
+        default=dt.datetime.now
+    )
+    datetime_called = models.DateTimeField(
+        verbose_name='Созвон с клиентом',
+        null=True,
+        blank=True
+    )
+    datetime_delivered = models.DateTimeField(
+        verbose_name='Доставлен',
+        null=True,
+        blank=True
     )
     products= models.ManyToManyField(
         Product,
