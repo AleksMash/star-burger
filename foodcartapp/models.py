@@ -146,6 +146,13 @@ class Order(models.Model):
         (DELIVERY, 'Доставка'),
         (DONE, 'Доставлен'),
     ]
+    CASH ='CSH'
+    CARD = 'CRD'
+    PAYMENT_TYPE =  [
+        (CASH, 'Наличными'),
+        (CARD, 'Картой'),
+    ]
+
     status = models.CharField(
         verbose_name='Статус',
         max_length=4,
@@ -153,19 +160,29 @@ class Order(models.Model):
         default=NEW,
         db_index=True
     )
+    payment_type = models.CharField(
+        verbose_name='Способ оплаты',
+        max_length=4,
+        choices=PAYMENT_TYPE,
+        default=CASH,
+        db_index=True
+    )
     datetime_registered = models.DateTimeField(
         verbose_name='Зарегестрирован',
-        default=dt.datetime.now
+        default=dt.datetime.now,
+        db_index=True
     )
     datetime_called = models.DateTimeField(
         verbose_name='Созвон с клиентом',
         null=True,
-        blank=True
+        blank=True,
+        db_index=True
     )
     datetime_delivered = models.DateTimeField(
         verbose_name='Доставлен',
         null=True,
-        blank=True
+        blank=True,
+        db_index=True
     )
     products= models.ManyToManyField(
         Product,
