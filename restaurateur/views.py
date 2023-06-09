@@ -4,12 +4,35 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.conf import settings
 
+import requests
+
+from geopy import distance as dist
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+
+YNDX_GEO_API_KEY = settings.YNDX_GEO_API_KEY
+
+
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
 
 
 class Login(forms.Form):
@@ -106,10 +129,11 @@ def view_orders(request):
                     restaurants_for_product = menu_items.filter(product=product).values_list('restaurant__name', flat=True)
                     product_restaurans_cache[product.id] = restaurants_for_product
                 order_restaurants.extend(restaurants_for_product)
-            order.restaurant_for_template = ', '.join(set(order_restaurants))
+            order.restaurant_for_template = set(order_restaurants)
         else:
             order.restaurant_for_template = order.restaurant.name
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders
     })
+

@@ -6,7 +6,6 @@
   <center>
     <h2>Необработанные заказы</h2>
   </center>
-
   <hr/>
   <br/>
   <br/>
@@ -37,10 +36,16 @@
         <td>{{item.comment}}</td>
         <td>
           {% if item.restaurant %}
-          <b style="color: green">Готовится в</b> {{item.restaurant_for_template}}
+            <b style="color: green">Готовится в</b><br><ul><li>{{item.restaurant_for_template}}</li></ul>
           {% else %}
-          <b style="color:blue">Может быть приготовлен в:</b><br>
-            {{item.restaurant_for_template}}
+          <details style="border: 1px solid; border-radius: 4px; padding: 0.5em 0.5em 0">
+            <summary><p style="color: red">Может быть приготовлен в...</p></summary>
+              <ul>
+                {% for rest in item.restaurant_for_template%}
+                  <li>{{rest}}</li>
+                {% endfor %}
+              </ul>
+          </details>
           {% endif %}
         </td>
         <td><a href="{% url 'admin:foodcartapp_order_change' object_id=item.id %}?next={{ request.path }}">Редактировать</a></td>
