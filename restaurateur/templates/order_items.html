@@ -35,14 +35,18 @@
         <td>{{item.address}}</td>
         <td>{{item.comment}}</td>
         <td>
-          {% if item.restaurant %}
-            <b style="color: green">Готовится в</b><br><ul><li>{{item.restaurant_for_template}}</li></ul>
+          {% if item.restaurant_appointed %}
+            <b style="color: green">Готовится в</b><br><ul><li>{{item.restaurant_appointed}}</li></ul>
           {% else %}
           <details style="border: 1px solid; border-radius: 4px; padding: 0.5em 0.5em 0">
             <summary><p style="color: red">Может быть приготовлен в...</p></summary>
               <ul>
-                {% for rest in item.restaurant_for_template%}
-                  <li>{{rest}}</li>
+                {% for rest in item.restaurants_capable%}
+                  {% if rest.2 == "error" %}
+                    <li>{{rest.0}} - ошибка определения расстояния </li>
+                  {% else %}
+                    <li>{{rest.0}} - {{rest.2}} км</li>
+                  {% endif %}
                 {% endfor %}
               </ul>
           </details>

@@ -34,6 +34,13 @@ def fetch_coordinates(apikey, address):
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
     return lon, lat
 
+def get_distance(place_1, place_2):
+    if not (place_1 and place_2):
+        raise ValueError('Оба или один из адресов представлен пустой строкой')
+    lon_1, lat_1 = fetch_coordinates(YNDX_GEO_API_KEY, place_1)
+    lon_2, lat_2 = fetch_coordinates(YNDX_GEO_API_KEY, place_2)
+    return dist.distance((lat_1, lon_1), (lat_2, lon_2)).km
+
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -120,20 +127,30 @@ def view_orders(request):
         .prefetch_related('products', 'restaurant').cost().order_by('status'))
     menu_items = RestaurantMenuItem.objects.filter(availability=True).values('restaurant', 'product')
     product_restaurans_cache = {}
+    restaurans_cache ={}
     for order in orders:
         if order.restaurant is None:
-            order_restaurants=[]
+            order_restaurants={}
             for product in order.products.all():
                 restaurants_for_product = product_restaurans_cache.get(product.id)
                 if not restaurants_for_product:
-                    restaurants_for_product = menu_items.filter(product=product).values_list('restaurant__name', flat=True)
+                    restaurants_for_product = menu_items.filter(product=product)\
+                        .values_list('restaurant__id', 'restaurant__name','restaurant__address' )
                     product_restaurans_cache[product.id] = restaurants_for_product
-                order_restaurants.extend(restaurants_for_product)
-            order.restaurant_for_template = set(order_restaurants)
+                for restaurant_id, *other_info in restaurants_for_product:
+                    if not restaurant_id in order_restaurants:
+                        other_info = list(other_info)
+                        try:
+                            distance = round(get_distance(other_info[1], order.address),0)
+                        except Exception as e:
+                            other_info.append('error')
+                        else:
+                            other_info.append(distance)
+                        order_restaurants[restaurant_id] = other_info
+            order.restaurants_capable = sorted(list(order_restaurants.values()), key=lambda d: d[2])
         else:
-            order.restaurant_for_template = order.restaurant.name
+            order.restaurant_appointed = order.restaurant.name
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders
     })
-

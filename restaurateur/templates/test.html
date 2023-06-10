@@ -9,9 +9,17 @@
   {{order_items}}<br>
   <br>
   {% for order in order_items%}
-    {{order_rests}}<br>
+    {% if order.restaurant_appointed %}
+      Назначенный ресторан:<br>
+      {{order.restaurant_appointed}}<br>
+    {% else %}
+      {% for restaurant in order.restaurants_capable %}
+        {{restaurant}}
+        Ресторан: {{restaurant.0}}<br>
+        Адрес: {{restaurant.1}}<br>
+      {% endfor %}
+    {% endif %}
   {% endfor %}
   <br>
-  {{menu_items}}
 </body>
 </html>
