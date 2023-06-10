@@ -9,8 +9,9 @@ from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import ValidationError
 
-
 from .models import Product, Order, ProductsInOrder
+
+from geodata.models import Place
 
 @api_view(['GET'])
 def banners_list_api(request):
@@ -74,6 +75,9 @@ class OrderSerializer(ModelSerializer):
             raise ValidationError('Этот список не может быть пустым')
         return values
 
+    def validate_address(self, value: str):
+        return ' '.join(value.split())
+
     class Meta:
         model = Order
         fields = ['products','firstname', 'lastname', 'address', 'phonenumber']
@@ -99,6 +103,7 @@ def register_order(request):
             for product_in_order in products_in_order_saved:
                 product_in_order.price = product_in_order.product.price
             ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
+
 
     except Exception:
         return Response({'error': traceback.format_exc()},

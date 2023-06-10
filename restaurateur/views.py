@@ -1,5 +1,5 @@
 from django import forms
-from django.db.models import F, Q, Count
+from django.db.models import F, Q, Count, ObjectDoesNotExist
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
@@ -11,8 +11,8 @@ from django.conf import settings
 import requests
 
 from geopy import distance as dist
-
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from geodata.models import Place
 
 YNDX_GEO_API_KEY = settings.YNDX_GEO_API_KEY
 
@@ -34,12 +34,31 @@ def fetch_coordinates(apikey, address):
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
     return lon, lat
 
-def get_distance(place_1, place_2):
-    if not (place_1 and place_2):
-        raise ValueError('Оба или один из адресов представлен пустой строкой')
-    lon_1, lat_1 = fetch_coordinates(YNDX_GEO_API_KEY, place_1)
-    lon_2, lat_2 = fetch_coordinates(YNDX_GEO_API_KEY, place_2)
-    return dist.distance((lat_1, lon_1), (lat_2, lon_2)).km
+def get_distance(places: tuple, places_cache: dict = None):
+    '''
+    get the distance between two places using GeoPy and Yandex geocoder
+    first trying to get coordinates in the following order:
+     - from places_cache (if given), from DB, from Yandex geocoder
+    :param places: tuple of two places: str
+    :param places_cache: if given, coordinates are searched here first
+    :return: distance in km
+    '''
+    if not len(places) == 2 or not (places[0] and places[1]) :
+        raise ValueError()
+    coordinates = []
+    for place in places:
+        try:
+            coordinates.append(places_cache[place])
+        except Exception:
+            try:
+                lon, lat = Place.objects.values_list('lon', 'lat').get(place=place)
+            except ObjectDoesNotExist:
+                lon, lat = fetch_coordinates(YNDX_GEO_API_KEY, place)
+                Place.objects.create(place=place, lon=lon, lat=lat)
+            coordinates.append((lat, lon))
+            if not places_cache is None:
+                places_cache[place] = (lat, lon)
+    return dist.distance(coordinates[0], coordinates[1]).km
 
 
 class Login(forms.Form):
@@ -127,7 +146,7 @@ def view_orders(request):
         .prefetch_related('products', 'restaurant').cost().order_by('status'))
     menu_items = RestaurantMenuItem.objects.filter(availability=True).values('restaurant', 'product')
     product_restaurans_cache = {}
-    restaurans_cache ={}
+    places_cache = {}
     for order in orders:
         if order.restaurant is None:
             order_restaurants={}
@@ -138,10 +157,11 @@ def view_orders(request):
                         .values_list('restaurant__id', 'restaurant__name','restaurant__address' )
                     product_restaurans_cache[product.id] = restaurants_for_product
                 for restaurant_id, *other_info in restaurants_for_product:
+
                     if not restaurant_id in order_restaurants:
                         other_info = list(other_info)
                         try:
-                            distance = round(get_distance(other_info[1], order.address),0)
+                            distance = round(get_distance((other_info[1], order.address), places_cache),0)
                         except Exception as e:
                             other_info.append('error')
                         else:
