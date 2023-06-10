@@ -1,4 +1,11 @@
-django==3.2.15
+dj-database-url==2.0.0
+dj-email-url==1.0.6
+django-cache-url==3.4.4
 django-debug-toolbar==3.2.1
+django-phonenumber-field==7.1.0
+djangorestframework==3.14.0
+environs==9.3.2
+geopy==2.3.0
+phonenumbers==8.13.13
 Pillow==8.2.0
-environs[django]==9.3.2
+requests==2.31.0
