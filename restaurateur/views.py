@@ -157,7 +157,6 @@ def view_orders(request):
                         .values_list('restaurant__id', 'restaurant__name','restaurant__address' )
                     product_restaurans_cache[product.id] = restaurants_for_product
                 for restaurant_id, *other_info in restaurants_for_product:
-
                     if not restaurant_id in order_restaurants:
                         other_info = list(other_info)
                         try:

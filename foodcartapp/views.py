@@ -78,6 +78,17 @@ class OrderSerializer(ModelSerializer):
     def validate_address(self, value: str):
         return ' '.join(value.split())
 
+    def create(self, validated_data):
+        products = validated_data.pop('products')
+        order = Order.objects.create(**validated_data)
+        products_in_order_prepared = [ProductsInOrder(order=order, price=0, **fields) for fields in products]
+        ProductsInOrder.objects.bulk_create(products_in_order_prepared)
+        products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
+        for product_in_order in products_in_order_saved:
+            product_in_order.price = product_in_order.product.price
+        ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
+        return order
+
     class Meta:
         model = Order
         fields = ['products','firstname', 'lastname', 'address', 'phonenumber']
@@ -89,22 +100,7 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)
     try:
         with transaction.atomic():
-            order = Order(
-                firstname=serializer.validated_data['firstname'],
-                lastname=serializer.validated_data['lastname'],
-                phonenumber=serializer.validated_data['phonenumber'],
-                address=serializer.validated_data['address']
-            )
-            order.save()
-            products_in_order_fields = serializer.validated_data['products']
-            products_in_order = [ProductsInOrder(order=order, price=0,  **fields) for fields in products_in_order_fields]
-            ProductsInOrder.objects.bulk_create(products_in_order)
-            products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
-            for product_in_order in products_in_order_saved:
-                product_in_order.price = product_in_order.product.price
-            ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
-
-
+            order = serializer.create(serializer.validated_data)
     except Exception:
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
