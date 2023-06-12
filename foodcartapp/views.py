@@ -78,16 +78,8 @@ class OrderSerializer(ModelSerializer):
     def validate_address(self, value: str):
         return ' '.join(value.split())
 
-    def create(self, validated_data):
-        products = validated_data.pop('products')
-        order = Order.objects.create(**validated_data)
-        products_in_order_prepared = [ProductsInOrder(order=order, price=0, **fields) for fields in products]
-        ProductsInOrder.objects.bulk_create(products_in_order_prepared)
-        products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
-        for product_in_order in products_in_order_saved:
-            product_in_order.price = product_in_order.product.price
-        ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
-        return order
+    def create(self):
+        return Order.objects.create(**self.validated_data)
 
     class Meta:
         model = Order
@@ -100,7 +92,14 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)
     try:
         with transaction.atomic():
-            order = serializer.create(serializer.validated_data)
+            products = serializer.validated_data.pop('products')
+            order = serializer.create()
+            products_in_order_prepared = [ProductsInOrder(order=order, price=0, **fields) for fields in products]
+            ProductsInOrder.objects.bulk_create(products_in_order_prepared)
+            products_in_order_saved = list(ProductsInOrder.objects.filter(order=order))
+            for product_in_order in products_in_order_saved:
+                product_in_order.price = product_in_order.product.price
+            ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
     except Exception:
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)

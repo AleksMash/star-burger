@@ -161,7 +161,7 @@ def view_orders(request):
                         other_info = list(other_info)
                         try:
                             distance = round(get_distance((other_info[1], order.address), places_cache),0)
-                        except Exception as e:
+                        except Exception:
                             other_info.append('error')
                         else:
                             other_info.append(distance)
