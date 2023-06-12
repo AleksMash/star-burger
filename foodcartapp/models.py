@@ -164,7 +164,6 @@ class Order(models.Model):
         verbose_name='Способ оплаты',
         max_length=4,
         choices=PAYMENT_TYPE,
-        default=CASH,
         db_index=True
     )
     datetime_registered = models.DateTimeField(
