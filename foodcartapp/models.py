@@ -131,12 +131,12 @@ class RestaurantMenuItem(models.Model):
 class OrderQueryset(models.QuerySet):
     def cost(self):
         return self.annotate(
-            order_cost=models.Sum(F('productsinorder__price') * F('productsinorder__quantity'))
+            order_cost=models.Sum(F('products__price') * F('products__quantity'))
         )
 
     def orders_for_manager(self):
         return self.exclude(status=Order.DONE)\
-        .prefetch_related('products').select_related('restaurant').cost()\
+        .prefetch_related('products__product').select_related('restaurant').cost()\
         .annotate(products_count=models.Count('products')).order_by('status')
 
 
@@ -188,11 +188,6 @@ class Order(models.Model):
         blank=True,
         db_index=True
     )
-    products= models.ManyToManyField(
-        Product,
-        through='ProductsInOrder',
-        null=False
-    )
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=30,
@@ -238,11 +233,13 @@ class ProductsInOrder(models.Model):
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        verbose_name='Товар'
+        verbose_name='Товар',
+        related_name='orders'
     )
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
+        related_name='products'
     )
     price = models.DecimalField (
         verbose_name='цена',

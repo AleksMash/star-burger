@@ -151,7 +151,7 @@ def view_orders(request):
     for order in orders:
         if order.restaurant is None:
             # product_ids = order.products.values_list('id', flat=True).all()
-            first_product_id = order.products.all()[0].id
+            first_product_id = order.products.all()[0].product.id
             restaurants_for_product = product_restaurans_cache.get(first_product_id)
             if not restaurants_for_product:
                 restaurants_for_product = list(menu_items.filter(product__id=first_product_id) \
@@ -160,7 +160,7 @@ def view_orders(request):
             order_restaurants = restaurants_for_product
             if order.products_count > 1:
                 for product in order.products.all()[1:]:
-                    restaurants_for_product = product_restaurans_cache.get(product.id)
+                    restaurants_for_product = product_restaurans_cache.get(product.product.id)
                     if not restaurants_for_product:
                         restaurants_for_product = list(menu_items.filter(product=product.id)\
                             .values_list('restaurant__id','restaurant__name','restaurant__address'))
