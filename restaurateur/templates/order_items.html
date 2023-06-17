@@ -38,18 +38,22 @@
           {% if item.restaurant_appointed %}
             <b style="color: green">Готовится в</b><br><ul><li>{{item.restaurant_appointed}}</li></ul>
           {% else %}
-          <details style="border: 1px solid; border-radius: 4px; padding: 0.5em 0.5em 0">
-            <summary><p style="color: red">Может быть приготовлен в...</p></summary>
-              <ul>
-                {% for rest in item.restaurants_capable%}
-                  {% if rest.2 == "error" %}
-                    <li>{{rest.0}} - ошибка определения расстояния </li>
-                  {% else %}
-                    <li>{{rest.0}} - {{rest.2}} км</li>
-                  {% endif %}
-                {% endfor %}
-              </ul>
-          </details>
+            {% if item.restaurants_capable %}
+              <details style="border: 1px solid; border-radius: 4px; padding: 0.5em 0.5em 0">
+                <summary><p>Может быть приготовлен в...</p></summary>
+                  <ul>
+                    {% for rest in item.restaurants_capable%}
+                      {% if rest.3 == "error" %}
+                        <li>{{rest.1}} - ошибка определения расстояния </li>
+                      {% else %}
+                        <li>{{rest.1}} - {{rest.3}} км</li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+              </details>
+            {% else %}
+              <p style="color: red">Нет всех товаров в одном ресторане</p>
+            {% endif %}
           {% endif %}
         </td>
         <td><a href="{% url 'admin:foodcartapp_order_change' object_id=item.id %}?next={{ request.path }}">Редактировать</a></td>

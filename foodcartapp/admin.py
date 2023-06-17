@@ -123,5 +123,4 @@ class OrderAdmin(admin.ModelAdmin):
         if next_url:
             if url_has_allowed_host_and_scheme(next_url, ['127.0.0.1']):
                 return HttpResponseRedirect(next_url)
-        else:
-            return res
+        return res

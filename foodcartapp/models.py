@@ -134,6 +134,11 @@ class OrderQueryset(models.QuerySet):
             order_cost=models.Sum(F('productsinorder__price') * F('productsinorder__quantity'))
         )
 
+    def orders_for_manager(self):
+        return self.exclude(status=Order.DONE)\
+        .prefetch_related('products').select_related('restaurant').cost()\
+        .annotate(products_count=models.Count('products')).order_by('status')
+
 
 class Order(models.Model):
     NEW = '01'

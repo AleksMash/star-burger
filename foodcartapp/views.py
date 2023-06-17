@@ -1,17 +1,14 @@
-import json
 import traceback
 
 from django.templatetags.static import static
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
-from rest_framework.serializers import ValidationError
 
 from .models import Product, Order, ProductsInOrder
+from .serializers import OrderSerializer
 
-from geodata.models import Place
 
 @api_view(['GET'])
 def banners_list_api(request):
@@ -61,34 +58,10 @@ def product_list_api(request):
     return Response(dumped_products)
 
 
-class ProductsInOrderSerializer(ModelSerializer):
-    class Meta:
-        model = ProductsInOrder
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = ProductsInOrderSerializer(many=True, write_only=True)
-
-    def validate_products(self, values):
-        if not values:
-            raise ValidationError('Этот список не может быть пустым')
-        return values
-
-    def validate_address(self, value: str):
-        return ' '.join(value.split())
-
-    def create(self):
-        return Order.objects.create(**self.validated_data)
-
-    class Meta:
-        model = Order
-        fields = ['products','firstname', 'lastname', 'address', 'phonenumber']
-
-
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
+    print(request.data)
     serializer.is_valid(raise_exception=True)
     try:
         with transaction.atomic():
@@ -101,6 +74,7 @@ def register_order(request):
                 product_in_order.price = product_in_order.product.price
             ProductsInOrder.objects.bulk_update(products_in_order_saved, fields=['price'])
     except Exception:
+        print(traceback.format_exc())
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:

@@ -54,6 +54,8 @@ def get_distance(places: tuple, places_cache: dict = None):
                 lon, lat = Place.objects.values_list('lon', 'lat').get(place=place)
             except ObjectDoesNotExist:
                 lon, lat = fetch_coordinates(YNDX_GEO_API_KEY, place)
+                if not (lon and lat):
+                    raise ValueError
                 Place.objects.create(place=place, lon=lon, lat=lat)
             coordinates.append((lat, lon))
             if not places_cache is None:
@@ -142,34 +144,47 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = list(Order.objects.all().exclude(status=Order.DONE)\
-        .prefetch_related('products', 'restaurant').cost().order_by('status'))
+    orders = Order.objects.orders_for_manager()
     menu_items = RestaurantMenuItem.objects.filter(availability=True).values('restaurant', 'product')
     product_restaurans_cache = {}
     places_cache = {}
     for order in orders:
         if order.restaurant is None:
-            order_restaurants={}
-            for product in order.products.all():
-                restaurants_for_product = product_restaurans_cache.get(product.id)
-                if not restaurants_for_product:
-                    restaurants_for_product = menu_items.filter(product=product)\
-                        .values_list('restaurant__id', 'restaurant__name','restaurant__address' )
-                    product_restaurans_cache[product.id] = restaurants_for_product
-                for restaurant_id, *other_info in restaurants_for_product:
-                    if not restaurant_id in order_restaurants:
-                        other_info = list(other_info)
-                        try:
-                            distance = round(get_distance((other_info[1], order.address), places_cache),0)
-                        except Exception:
-                            other_info.append('error')
-                        else:
-                            other_info.append(distance)
-                        order_restaurants[restaurant_id] = other_info
-            order.restaurants_capable = sorted(list(order_restaurants.values()), key=lambda d: d[2])
+            # product_ids = order.products.values_list('id', flat=True).all()
+            first_product_id = order.products.all()[0].id
+            restaurants_for_product = product_restaurans_cache.get(first_product_id)
+            if not restaurants_for_product:
+                restaurants_for_product = list(menu_items.filter(product__id=first_product_id) \
+                    .values_list('restaurant__id', 'restaurant__name', 'restaurant__address'))
+                product_restaurans_cache[first_product_id] = restaurants_for_product
+            order_restaurants = restaurants_for_product
+            if order.products_count > 1:
+                for product in order.products.all()[1:]:
+                    restaurants_for_product = product_restaurans_cache.get(product.id)
+                    if not restaurants_for_product:
+                        restaurants_for_product = list(menu_items.filter(product=product.id)\
+                            .values_list('restaurant__id','restaurant__name','restaurant__address'))
+                        product_restaurans_cache[product.id] = restaurants_for_product
+                    product_restaurant_ids = [t[0] for t in restaurants_for_product]
+                    order_restaurants = list(
+                        filter(lambda item: item[0] in product_restaurant_ids, order_restaurants)
+                    )
+                    if not order_restaurants:
+                        break
+            order_restaurants = list(map(lambda v: list(v), order_restaurants))
+            for restaurant in order_restaurants:
+                try:
+                    distance = round(get_distance((restaurant[2], order.address), places_cache),0)
+                except Exception:
+                    restaurant.append('error')
+                else:
+                    restaurant.append(distance)
+            if len(order_restaurants) > 1:
+                order.restaurants_capable = sorted(order_restaurants, key=lambda v: v[3])
+            else:
+                order.restaurants_capable = order_restaurants
         else:
             order.restaurant_appointed = order.restaurant.name
-
     return render(request, template_name='order_items.html', context={
         'order_items': orders
     })
