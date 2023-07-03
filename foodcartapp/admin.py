@@ -113,6 +113,7 @@ class ProductsInOrderInline(admin.TabularInline):
     min_num = 1
     extra = 0
 
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [ProductsInOrderInline]
@@ -121,6 +122,6 @@ class OrderAdmin(admin.ModelAdmin):
         res = super(OrderAdmin, self).response_change(request, obj)
         next_url = request.GET.get('next')
         if next_url:
-            if url_has_allowed_host_and_scheme(next_url, ['127.0.0.1']):
+            if url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
                 return HttpResponseRedirect(next_url)
         return res
