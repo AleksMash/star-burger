@@ -64,8 +64,7 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)
     try:
         order = serializer.create()
-    except Exception:
-        print(traceback.format_exc())
+    except Exception as e:
         return Response({'error': traceback.format_exc()},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
