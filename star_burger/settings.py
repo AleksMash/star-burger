@@ -35,7 +35,7 @@ INSTALLED_APPS = [
 
 ROLLBAR = {
     'access_token': env.str('RB_TOKEN'),
-    'environment': 'development' if DEBUG else 'production',
+    'environment': env.str('RB_ENV', 'undefined'),
     'code_version': '1.0',
     'root': BASE_DIR,
 }
