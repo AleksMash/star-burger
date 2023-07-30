@@ -9,7 +9,7 @@ env = Env()
 env.read_env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 SECRET_KEY = env('SECRET_KEY')
@@ -33,6 +33,13 @@ INSTALLED_APPS = [
     'geodata'
 ]
 
+ROLLBAR = {
+    'access_token': env.str('RB_TOKEN'),
+    'environment': 'development' if DEBUG else 'production',
+    'code_version': '1.0',
+    'root': BASE_DIR,
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -41,7 +48,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 ]
 
 ROOT_URLCONF = 'star_burger.urls'
@@ -116,6 +124,7 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 INTERNAL_IPS = [
     '127.0.0.1'

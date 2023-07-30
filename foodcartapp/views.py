@@ -12,7 +12,7 @@ from .serializers import OrderSerializer
 
 @api_view(['GET'])
 def banners_list_api(request):
-    # FIXME move data to db?
+    # FIXME move tdaa to db?
     return Response([
         {
             'title': 'Burger',
