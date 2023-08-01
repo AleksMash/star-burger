@@ -52,8 +52,7 @@ python -m venv venv
   
 - Windows: `.\venv\Scripts\activate`  
 - MacOS/Linux: `source venv/bin/activate`  
-  
-  
+    
 Установите зависимости в виртуальное окружение:  
 
 ```sh  
@@ -151,6 +150,11 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts) 
 - `RB_TOKEN` - токен POST запросов Rollbar
 - `RB_ENV=production` 
+
+### Обновление кода на сервере
+
+- обновите код в GitHub - репозитарии
+- на сервере выполните команду `bash /root/update_start_burger`
   
 ## Цели проекта  
   
