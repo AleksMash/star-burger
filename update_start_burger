@@ -25,9 +25,9 @@ if [[ -n $RB_TOKEN ]]; then
           -X  POST \
           -d  '{"environment": "production", "revision":"'${rev}'", "rollbar_name": "Alex", "local_username": "Alex", "comment": "deployment", "status": "succeeded"}'\
           https://api.rollbar.com/api/1/deploy
+  echo "Отметка о деплое направлена в Rollbar"
   else
-    echo "Токен Rollbar не задан. Уведомление о деплое не будет направлено"
+    echo "Токен Rollbar не задан. Отметка о деплое не будет направлена"
 fi
 
 echo "Код обновлен, юнит 'star-burger2.service' перезапущен"
-
