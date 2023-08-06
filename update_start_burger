@@ -1,0 +1,72 @@
+#!/bin/bash
+
+cd /opt/star-burger
+git  pull
+
+if [[ $? != 0 ]]
+	then
+		echo "Ошибка git pull"
+		exit
+fi
+
+rev=$(git rev-parse --short HEAD)
+
+curl    -H "X-Rollbar-Access-Token: 948459ff5a2b490f86cfee685d15b037" \
+        -H "Content-Type: application/json" \
+        -X  POST \
+        -d  '{"environment": "production", "revision":"'${rev}'", "rollbar_name": "Alex", "local_username": "Alex", "comment": "deployment", "status": "succeeded"}'\
+        https://api.rollbar.com/api/1/deploy
+
+if [[ $? != 0 ]]
+        then
+                echo "Ошибка при регистрации деплоя в Rollbar"
+                exit
+fi
+
+
+/opt/star-burger/venv/bin/pip install -r  requirements.txt
+
+if [[ $? != 0 ]]
+	then
+		echo "Ошибка при установке зависимостей Python"
+		exit
+fi
+
+npm ci --dev
+
+if [[ $? != 0 ]]
+	then
+		echo "Ошибка при установке пакетов Node.js"
+		exit
+fi
+
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+
+#echo PID Процесса node: $!
+
+
+if [[ $? != 0 ]]
+	then
+		echo "Ошибка Parcel"
+		exit
+fi
+
+
+
+/opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate
+
+
+if [[ $? != 0 ]]
+        then
+                echo "Ошибка запуска миграции"
+                exit
+fi
+
+systemctl restart star-burger2
+
+if [[ $? != 0 ]]
+        then
+                echo "Ошибка перезапуска Django процесса (star-burger2.service)"
+                exit
+fi
+echo "Код обновлен, сервис star-burger2.service перезапущен"
