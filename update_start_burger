@@ -2,16 +2,11 @@
 
 set -e
 
+source .env
+
 cd /opt/star-burger
+
 git  pull
-
-rev=$(git rev-parse --short HEAD)
-
-curl    -H "X-Rollbar-Access-Token: 948459ff5a2b490f86cfee685d15b037" \
-        -H "Content-Type: application/json" \
-        -X  POST \
-        -d  '{"environment": "production", "revision":"'${rev}'", "rollbar_name": "Alex", "local_username": "Alex", "comment": "deployment", "status": "succeeded"}'\
-        https://api.rollbar.com/api/1/deploy
 
 /opt/star-burger/venv/bin/pip install -r  requirements.txt
 
@@ -21,6 +16,18 @@ npm ci --dev
 
 /opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate
 
-systemctl restart star-burger2
+systemctl reload star-burger2
 
-echo "Код обновлен, сервис star-burger2.service перезапущен"
+if [ -v $RB_TOKEN ]; then
+  rev=$(git rev-parse --short HEAD)
+  curl    -H "X-Rollbar-Access-Token: $RB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -X  POST \
+          -d  '{"environment": "production", "revision":"'${rev}'", "rollbar_name": "Alex", "local_username": "Alex", "comment": "deployment", "status": "succeeded"}'\
+          https://api.rollbar.com/api/1/deploy
+  else
+    echo "Токен Rollbar не задан. Уведомление о деплое не будет направлено"
+fi
+
+echo "Код обновлен, юнит 'star-burger2.service' перезагружен"
+
