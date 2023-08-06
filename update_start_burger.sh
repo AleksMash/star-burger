@@ -16,7 +16,7 @@ npm ci --dev
 
 /opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate
 
-/opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py collectstatic
+/opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py collectstatic --noinput
 
 systemctl restart star-burger2
 
