@@ -16,7 +16,7 @@ npm ci --dev
 
 /opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate
 
-systemctl reload star-burger2
+systemctl restart star-burger2
 
 if [ -v $RB_TOKEN ]; then
   rev=$(git rev-parse --short HEAD)
@@ -29,5 +29,5 @@ if [ -v $RB_TOKEN ]; then
     echo "Токен Rollbar не задан. Уведомление о деплое не будет направлено"
 fi
 
-echo "Код обновлен, юнит 'star-burger2.service' перезагружен"
+echo "Код обновлен, юнит 'star-burger2.service' перезапущен"
 
