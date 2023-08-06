@@ -14,7 +14,7 @@ npm ci --dev
 
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 
-/opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate
+/opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate --noinput
 
 /opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py collectstatic --noinput
 
