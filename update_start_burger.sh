@@ -16,6 +16,8 @@ npm ci --dev
 
 /opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py migrate
 
+/opt/star-burger/venv/bin/python3 /opt/star-burger/manage.py collectstatic
+
 systemctl restart star-burger2
 
 if [[ -n $RB_TOKEN ]]; then
