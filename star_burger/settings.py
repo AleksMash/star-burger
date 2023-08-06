@@ -33,12 +33,6 @@ INSTALLED_APPS = [
     'geodata'
 ]
 
-ROLLBAR = {
-    'access_token': env.str('RB_TOKEN'),
-    'environment': env.str('RB_ENV', 'undefined'),
-    'code_version': '1.0',
-    'root': BASE_DIR,
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,8 +43,18 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 ]
+
+RB_TOKEN = env.str('RB_TOKEN', None)
+
+if RB_TOKEN:
+    ROLLBAR = {
+        'access_token': RB_TOKEN,
+        'environment': env.str('RB_ENV', 'undefined'),
+        'code_version': '1.0',
+        'root': BASE_DIR,
+    }
+    MIDDLEWARE.append('rollbar.contrib.django.middleware.RollbarNotifierMiddleware')
 
 ROOT_URLCONF = 'star_burger.urls'
 
@@ -139,4 +143,4 @@ PHONENUMBER_DEFAULT_FORMAT = 'INTERNATIONAL'
 PHONENUMBER_DEFAULT_REGION = 'RU'
 
 # Other settings
-YNDX_GEO_API_KEY = 'ff1c7f6a-36f7-4382-8a4f-012210e728b4'
+YNDX_GEO_API_KEY = env.str('YNDX_GEO_API_KEY')

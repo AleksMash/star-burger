@@ -148,8 +148,11 @@ Parcel будет следить за файлами в каталоге `bundle
 - `DEBUG` — дебаг-режим. Поставьте `False`.  
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.  
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts) 
-- `RB_TOKEN` - токен POST запросов Rollbar
+- `RB_TOKEN` - токен POST запросов Rollbar. 
 - `RB_ENV=production` 
+
+RB_TOKEN и RB_ENV можно не указывать - в этом случае Rollbar не будет использоваться.  
+
 
 ### Обновление кода на сервере
 
