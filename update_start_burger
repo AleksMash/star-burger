@@ -18,7 +18,7 @@ npm ci --dev
 
 systemctl restart star-burger2
 
-if [ -v $RB_TOKEN ]; then
+if [[ -n $RB_TOKEN ]]; then
   rev=$(git rev-parse --short HEAD)
   curl    -H "X-Rollbar-Access-Token: $RB_TOKEN" \
           -H "Content-Type: application/json" \
