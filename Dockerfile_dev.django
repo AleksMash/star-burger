@@ -22,14 +22,15 @@ RUN pip install -r requirements.txt
 # RUN chmod +x /usr/src/app/entrypoint.sh
 
 # copy project
-COPY assets .
-COPY foodcartapp .
-COPY geodata .
-COPY media .
-COPY restaurateur .
-COPY star_burger .
-COPY static .
-COPY templates .
+COPY assets assets/
+COPY bundles bundles/
+COPY foodcartapp foodcartapp/
+COPY geodata geodata/
+COPY media media/
+COPY restaurateur restaurateur/
+COPY star_burger star_burger/
+COPY static static/
+COPY templates templates/
 COPY manage.py .
 
 # run entrypoint.sh
