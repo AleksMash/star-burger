@@ -10,6 +10,6 @@ phonenumbers==8.13.13
 Pillow==8.2.0
 requests==2.31.0
 rollbar==0.16.3
-psycopg2==2.9.6
+psycopg2-binary==2.9.6
 gunicorn==21.2.0
 
