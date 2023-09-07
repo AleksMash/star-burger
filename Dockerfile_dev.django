@@ -1,5 +1,5 @@
 # pull official base image
-FROM python: python:3.9-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 # set work directory
 WORKDIR /opt/app
@@ -22,7 +22,15 @@ RUN pip install -r requirements.txt
 # RUN chmod +x /usr/src/app/entrypoint.sh
 
 # copy project
-COPY . .
+COPY assets .
+COPY foodcartapp .
+COPY geodata .
+COPY media .
+COPY restaurateur .
+COPY star_burger .
+COPY static .
+COPY templates .
+COPY manage.py .
 
 # run entrypoint.sh
 # ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
