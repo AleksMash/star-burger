@@ -1,1 +1,37 @@
-#to do
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev.django
+    # command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000 --reload
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      #- ./bundles:/opt/app/bundles/
+      - ./:/opt/app/
+      #- ./media:/opt/app/media/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.
+    depends_on:
+      - db
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev.node
+    volumes:
+      - ./bundles:/opt/app/bundles/
+      - ./bundles-src:/opt/app/bundles-src/
+    depends_on:
+      - web
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+     ./.env.db
+
+volumes:
+  postgres_data:

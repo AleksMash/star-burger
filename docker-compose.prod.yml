@@ -5,7 +5,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile.django
+      dockerfile: Dockerfile.prod.django
     command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_volume:/opt/app/static/
@@ -13,7 +13,7 @@ services:
     expose:
       - 8000
     env_file:
-      - ./.env
+      - ./.env.prod
     depends_on:
       - db
   node:

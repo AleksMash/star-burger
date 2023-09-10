@@ -1,0 +1,13 @@
+# pull official base image
+FROM python:3.9-slim-bullseye
+
+# set work directory
+WORKDIR /opt/app
+
+# install system dependencies
+RUN apt-get update && apt-get install -y netcat
+
+# install dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt

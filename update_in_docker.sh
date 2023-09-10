@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+source .env
+
 git  pull
 
 docker-compose -f docker-compose.prod.yml up --build -d
