@@ -1,0 +1,12 @@
+# pull official base image
+FROM node:16
+
+# set work directory
+WORKDIR /opt/app/
+
+COPY bundles-src bundles-src/
+COPY package*.json ./
+
+RUN npm ci --dev
+
+RUN ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir static --public-url="./"
