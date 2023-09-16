@@ -5,12 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev.django
-    # command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000 --reload
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      #- ./bundles:/opt/app/bundles/
       - ./:/opt/app/
-      #- ./media:/opt/app/media/
     ports:
       - 8000:8000
     env_file:
